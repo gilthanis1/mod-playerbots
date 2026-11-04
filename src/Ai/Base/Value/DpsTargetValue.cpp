@@ -8,6 +8,29 @@
 #include "PlayerbotAIConfig.h"
 #include "Playerbots.h"
 #include "Strategy.h"
+#include "Group.h" // CUSTOM (James)
+
+// CUSTOM (James): grouped DPS bots get no target until someone in the group is actually in combat
+// (the tank has pulled). Marking mobs alone never starts a fight. Battlegrounds and ungrouped bots are unaffected.
+static bool GroupNotInCombatYet(PlayerbotAI* botAI)
+{
+    Player* bot = botAI->GetBot();
+    Group* group = bot->GetGroup();
+    if (!group || bot->InBattleground() || !botAI->HasGameClientMaster())
+        return false;
+
+    if (bot->IsInCombat())
+        return false;
+
+    for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+    {
+        Player* member = ref->GetSource();
+        if (member && member->IsInWorld() && member->IsAlive() && member->IsInCombat())
+            return false;
+    }
+
+    return true;
+}
 
 class FindMaxThreatGapTargetStrategy : public FindTargetStrategy
 {
@@ -272,6 +295,9 @@ protected:
 
 Unit* DpsTargetValue::Calculate()
 {
+    if (GroupNotInCombatYet(botAI)) // CUSTOM (James)
+        return nullptr;
+
     GuidSet const exclusions = GatherStrategyTargetExclusions(botAI, TargetValueExclusionType::DpsTarget);
     Unit* rti = RtiTargetValue::Calculate();
     if (rti && exclusions.find(rti->GetGUID()) == exclusions.end())
@@ -322,6 +348,9 @@ protected:
 
 Unit* DpsAoeTargetValue::Calculate()
 {
+    if (GroupNotInCombatYet(botAI)) // CUSTOM (James)
+        return nullptr;
+
     GuidSet const exclusions = GatherStrategyTargetExclusions(botAI, TargetValueExclusionType::DpsTarget);
     Unit* rti = RtiTargetValue::Calculate();
     if (rti && exclusions.find(rti->GetGUID()) == exclusions.end())

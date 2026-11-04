@@ -7,6 +7,8 @@
 #include "PlayerbotRepository.h"
 #include "PlayerbotsDatabase.h"
 #include "AiObjectContext.h"
+#include "PlayerbotAIConfig.h"  // CUSTOM (James)
+#include "RandomPlayerbotMgr.h" // CUSTOM (James)
 
 void PlayerbotRepository::Load(PlayerbotAI* botAI)
 {
@@ -44,6 +46,16 @@ void PlayerbotRepository::Load(PlayerbotAI* botAI)
         botAI->GetAiObjectContext()->GetUntypedValue("outfit list");
 
         botAI->GetAiObjectContext()->Load(values);
+    }
+
+    // CUSTOM (James): saved strategies replace everything above, so re-apply the altbot strategies
+    // from playerbots.conf (Playerbots.CombatStrategies / NonCombatStrategies) on top. Config always wins.
+    if (!sRandomPlayerbotMgr.IsRandomBot(botAI->GetBot()))
+    {
+        if (!sPlayerbotAIConfig.CombatStrategies.empty())
+            botAI->ChangeStrategy(sPlayerbotAIConfig.CombatStrategies, BOT_STATE_COMBAT);
+        if (!sPlayerbotAIConfig.NonCombatStrategies.empty())
+            botAI->ChangeStrategy(sPlayerbotAIConfig.NonCombatStrategies, BOT_STATE_NON_COMBAT);
     }
 }
 
