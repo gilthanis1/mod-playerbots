@@ -17,7 +17,26 @@ bool RtiValue::Load(std::string const text)
     return true;
 }
 
-RtiCcValue::RtiCcValue(PlayerbotAI* botAI) : ManualSetValue<std::string>(botAI, "moon", "rti cc") {}
+// CUSTOM (James): default CC icon by class.
+// square = hunter (freezing trap), moon = mage (polymorph), diamond = warlock (fear; banish also uses circle),
+// circle = priest (shackle undead), star = rogue (sap). Everyone else keeps moon.
+static std::string DefaultRtiCc(PlayerbotAI* botAI)
+{
+    Player* bot = botAI ? botAI->GetBot() : nullptr;
+    if (!bot)
+        return "moon";
+
+    switch (bot->getClass())
+    {
+        case CLASS_HUNTER:  return "square";
+        case CLASS_WARLOCK: return "diamond";
+        case CLASS_PRIEST:  return "circle";
+        case CLASS_ROGUE:   return "star";
+        default:            return "moon";
+    }
+}
+
+RtiCcValue::RtiCcValue(PlayerbotAI* botAI) : ManualSetValue<std::string>(botAI, DefaultRtiCc(botAI), "rti cc") {}
 
 std::string const RtiCcValue::Save() { return value; }
 

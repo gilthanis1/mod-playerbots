@@ -11,6 +11,7 @@
 
 class PlayerbotAI;
 class Unit;
+class Group; // CUSTOM (James)
 
 class RtiTargetValue : public TargetValue
 {
@@ -32,6 +33,7 @@ public:
     static const int8 skullIndex = 7;
 
 private:
+    Unit* GetValidIconTarget(Group* group, int32 index); // CUSTOM (James): kill order helper
     std::string const type;
 };
 

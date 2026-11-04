@@ -92,6 +92,12 @@ bool FindNonCcTargetStrategy::IsCcTarget(Unit* attacker)
                 if (botAI->GetAiObjectContext()->GetValue<Unit*>("rti cc target")->Get() == attacker)
                     return true;
 
+                // CUSTOM (James): warlock bots banish circle, so DPS leaves circle alone too
+                if (member->getClass() == CLASS_WARLOCK)
+                    if (ObjectGuid guid = group->GetTargetIcon(RtiTargetValue::circleIndex))
+                        if (attacker->GetGUID() == guid)
+                            return true;
+
                 std::string const rti = botAI->GetAiObjectContext()->GetValue<std::string>("rti cc")->Get();
                 int32 index = RtiTargetValue::GetRtiIndex(rti);
                 if (index != -1)

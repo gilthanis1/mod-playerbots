@@ -32,6 +32,9 @@ int32 RtiTargetValue::GetRtiIndex(std::string const rti)
     return index;
 }
 
+// CUSTOM (James): kill order. A bot on the default "skull" works through
+// skull -> cross -> triangle, taking the first marked target that is still valid.
+// A bot told a different icon by hand (rti cross, etc.) and "rti cc" behave as before.
 Unit* RtiTargetValue::Calculate()
 {
     Group* group = bot->GetGroup();
@@ -44,6 +47,20 @@ Unit* RtiTargetValue::Calculate()
     if (index == -1)
         return nullptr;
 
+    if (type == "rti" && index == skullIndex)
+    {
+        static const int8 killOrder[] = {skullIndex, crossIndex, triangleIndex};
+        for (int8 i : killOrder)
+            if (Unit* unit = GetValidIconTarget(group, i))
+                return unit;
+        return nullptr;
+    }
+
+    return GetValidIconTarget(group, index);
+}
+
+Unit* RtiTargetValue::GetValidIconTarget(Group* group, int32 index)
+{
     ObjectGuid guid = group->GetTargetIcon(index);
     if (!guid)
         return nullptr;

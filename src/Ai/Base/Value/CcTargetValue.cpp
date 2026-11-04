@@ -9,6 +9,7 @@
 #include "AiObjectContext.h"
 #include "Group.h"
 #include "PlayerbotAI.h"
+#include "RtiTargetValue.h" // CUSTOM (James)
 #include "ServerFacade.h"
 
 class FindTargetForCcStrategy : public FindTargetStrategy
@@ -23,13 +24,32 @@ public:
     void CheckAttacker(Unit* creature, ThreatManager* /*threatMgr*/) override
     {
         Player* bot = botAI->GetBot();
+        // CUSTOM (James): once a marked CC target is found, don't let an unmarked mob replace it
+        if (markedResult)
+            return;
+
         if (!botAI->CanCastSpell(spell, creature))
             return;
 
         if (*botAI->GetAiObjectContext()->GetValue<Unit*>("rti cc target") == creature)
         {
             result = creature;
+            markedResult = true;
             return;
+        }
+
+        // CUSTOM (James): warlock banish also goes on circle (diamond is fear)
+        if (spell == "banish")
+        {
+            if (Group* g = bot->GetGroup())
+            {
+                if (g->GetTargetIcon(RtiTargetValue::circleIndex) == creature->GetGUID())
+                {
+                    result = creature;
+                    markedResult = true;
+                    return;
+                }
+            }
         }
 
         if (*botAI->GetAiObjectContext()->GetValue<Unit*>("current target") == creature)
@@ -87,6 +107,7 @@ public:
 private:
     std::string const spell;
     float maxDistance;
+    bool markedResult = false; // CUSTOM (James)
 };
 
 Unit* CcTargetValue::Calculate()
