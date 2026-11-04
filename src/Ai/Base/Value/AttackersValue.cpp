@@ -39,7 +39,9 @@ GuidVector AttackersValue::Calculate()
     {
         ObjectGuid skullGuid = group->GetTargetIcon(7);
         Unit* skullTarget = botAI->GetUnit(skullGuid);
-        if (skullTarget && IsValidTarget(skullTarget, bot))
+        // CUSTOM (James): a skull-marked mob only counts as an attacker once it is in combat,
+        // so marking a pack doesn't start the fight (or the wait-for-attack timer) before the tank pulls.
+        if (skullTarget && skullTarget->IsInCombat() && IsValidTarget(skullTarget, bot))
             targets.insert(skullTarget);
     }
 
